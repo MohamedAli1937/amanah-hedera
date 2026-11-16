@@ -7,5 +7,5 @@ httpx
 pytest
 psycopg[binary]
 PyJWT
-pwdlib
+pwdlib[argon2]
 hiero-sdk-python

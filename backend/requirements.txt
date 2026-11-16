@@ -3,6 +3,7 @@ uvicorn[standard]
 sqlalchemy
 python-dotenv
 email-validator
+python-multipart
 httpx
 pytest
 psycopg[binary]

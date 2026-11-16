@@ -43,6 +43,7 @@ export type Campaign = {
   lng?: number;
   image_url?: string;
   ngo_id: number;
+  ngo_name?: string;
   donation_link?: string | null;
   created_at?: string;
 };
@@ -55,12 +56,49 @@ export type Expense = {
   description: string;
   proof_url: string | null;
   created_at: string;
+  event_hash?: string | null;
+  hedera_topic_id?: string | null;
+  hedera_transaction_id?: string | null;
+  hedera_sequence_number?: number | null;
+  hedera_status?: string;
+  hashscan_tx_url?: string | null;
+  hashscan_topic_url?: string | null;
+};
+
+export type CampaignUpdate = {
+  id: number;
+  campaign_id: number;
+  kind: "update" | "photo" | "thanks" | "purchase" | "shipment" | "distribution";
+  message: string;
+  media_url: string | null;
+  created_at: string;
+  event_hash: string | null;
+  hedera_topic_id: string | null;
+  hedera_transaction_id: string | null;
+  hedera_sequence_number: number | null;
+  hedera_status: string;
+  hashscan_tx_url: string | null;
+  hashscan_topic_url: string | null;
+};
+
+export type ChainLink = {
+  stage: "donation" | "expense" | "shipment" | "distribution" | "update";
+  record_id: string;
+  title: string;
+  detail: string;
+  amount: number | string | null;
+  created_at: string | null;
+  proof_url: string | null;
+  hedera_status: string | null;
+  hashscan_tx_url: string | null;
+  hashscan_topic_url: string | null;
+  anonymous_ref: string | null;
 };
 
 export type AidEvent = {
-  id: number;
+  id: number | string;
   campaign_id: number;
-  event_type: "purchase" | "shipment" | "arrival" | "distribution" | "completed";
+  event_type: "purchase" | "shipment" | "arrival" | "distribution" | "completed" | "donation";
   description: string;
   proof_url: string | null;
   created_at: string;
@@ -69,19 +107,13 @@ export type AidEvent = {
   hedera_transaction_id: string | null;
   hedera_sequence_number: number | null;
   hedera_status: "pending" | "confirmed" | "failed";
-};
-
-export type Donation = {
-  id: number;
-  campaign_id: number;
-  amount: number;
-  status: "pending" | "confirmed" | "rejected";
-  receipt_token: string | null;
-  created_at: string;
+  review_status: "pending" | "approved" | "rejected";
+  review_note?: string | null;
+  reviewed_at?: string | null;
 };
 
 export type AidEventVerification = {
-  event_id: number;
+  event_id: number | string;
   canonical_payload: Record<string, unknown>;
   calculated_hash: string;
   stored_hash: string | null;
@@ -133,7 +165,7 @@ export type LedgerTransaction = {
   allocation_title: string;
   allocation_amount: number;
   hashscan_url: string | null;
-  is_demo: boolean;
+  hedera_topic_id?: string | null;
   raw_event?: AidEvent;
 };
 
@@ -161,21 +193,5 @@ export type UserProfile = {
   }[];
 };
 
-export type Page = "campaigns" | "campaign-detail" | "profile" | "ledger" | "login" | "register";
+export type Page = "campaigns" | "profile" | "ledger" | "login" | "register";
 
-export type ConsensusFeedItem = {
-  id: string;
-  tx_id: string;
-  timestamp: string;
-  event_type: "purchase" | "shipment" | "arrival" | "distribution" | "completed";
-  campaign: string;
-  campaign_id?: number;
-  usd_value: number;
-  hbar_equivalent: number;
-  latency_seconds: number;
-  is_demo: boolean;
-  hashscan_url?: string | null;
-  proof_url?: string | null;
-  description?: string;
-  raw_aid_event?: AidEvent;
-};

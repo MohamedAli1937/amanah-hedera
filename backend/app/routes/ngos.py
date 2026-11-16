@@ -72,6 +72,17 @@ def get_my_ngo_status(moderator: models.Moderator = Depends(get_current_moderato
     }
 
 
+@router.get("/public", response_model=list[schemas.NGORead])
+def list_ngos_public(db: Session = Depends(get_db)):
+    """Return all verified NGOs – accessible without authentication."""
+    return (
+        db.query(models.NGO)
+        .filter(models.NGO.verification_status == "verified")
+        .order_by(models.NGO.id.asc())
+        .all()
+    )
+
+
 @router.get("/",response_model=list[schemas.NGORead],)
 def list_ngos(db: Session = Depends(get_db),moderator: models.Moderator = Depends(require_roles("platform_admin")),):
     return db.query(models.NGO).order_by(models.NGO.id.desc()).all()

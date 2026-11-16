@@ -83,6 +83,11 @@ class Expense(Base):
     description = Column(Text, nullable=False)
     proof_url = Column(String(1000), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    event_hash = Column(String(64), nullable=True)
+    hedera_topic_id = Column(String(100), nullable=True)
+    hedera_transaction_id = Column(String(100), nullable=True)
+    hedera_sequence_number = Column(Integer, nullable=True)
+    hedera_status = Column(String(20), nullable=False, default="not_anchored")
 
     campaign = relationship("Campaign", back_populates="expenses")
 
@@ -103,10 +108,16 @@ class AidEvent(Base):
     hedera_transaction_id = Column(String(100), nullable=True)
     hedera_sequence_number = Column(Integer, nullable=True)
     hedera_status = Column(String(20), nullable=False, default="pending")
+    review_status = Column(String(20), nullable=False, default="pending")
+    review_note = Column(Text, nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
 
     campaign = relationship("Campaign", back_populates="aid_events")
 
-    __table_args__ = (CheckConstraint("event_type IN ('purchase', 'shipment', 'arrival', 'distribution', 'completed')"),)
+    __table_args__ = (
+        CheckConstraint("event_type IN ('purchase', 'shipment', 'arrival', 'distribution', 'completed')"),
+        CheckConstraint("review_status IN ('pending', 'approved', 'rejected')"),
+    )
 
 
 class Moderator(Base):
@@ -123,4 +134,42 @@ class Moderator(Base):
     __table_args__ = (
         CheckConstraint("role IN ('platform_admin', 'ngo_admin')"),
         CheckConstraint("(role = 'platform_admin' AND ngo_id IS NULL) OR (role = 'ngo_admin' AND ngo_id IS NOT NULL)"),
+    )
+
+
+class PairingSession(Base):
+    __tablename__ = "pairing_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(64), unique=True, nullable=False, index=True)
+    poll_secret = Column(String(64), nullable=False)
+    status = Column(String(20), nullable=False, default="waiting")
+    receipt_token = Column(String(128), nullable=True)
+    result_json = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+
+    __table_args__ = (CheckConstraint("status IN ('waiting', 'ready', 'consumed', 'expired')"),)
+
+
+class CampaignUpdate(Base):
+    __tablename__ = "campaign_updates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    campaign_id = Column(Integer, ForeignKey("campaigns.id"), nullable=False, index=True)
+    kind = Column(String(30), nullable=False)
+    message = Column(Text, nullable=False)
+    media_url = Column(String(1000), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    event_hash = Column(String(64), nullable=True)
+    hedera_topic_id = Column(String(100), nullable=True)
+    hedera_transaction_id = Column(String(100), nullable=True)
+    hedera_sequence_number = Column(Integer, nullable=True)
+    hedera_status = Column(String(20), nullable=False, default="not_anchored")
+
+    campaign = relationship("Campaign")
+
+    __table_args__ = (
+        CheckConstraint("kind IN ('update', 'photo', 'thanks', 'purchase', 'shipment', 'distribution')"),
     )

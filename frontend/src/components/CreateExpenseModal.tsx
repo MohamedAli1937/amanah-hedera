@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import type { Expense } from "../types";
-
 import { api } from "../api";
 
 interface Props {
@@ -20,7 +19,6 @@ export const CreateExpenseModal: React.FC<Props> = ({ campaignId, onClose, onCre
     e.preventDefault();
     setLoading(true);
     setError(null);
-
     try {
       const res = await api<Expense>(`/campaigns/${campaignId}/expenses`, {
         method: "POST",
@@ -41,34 +39,46 @@ export const CreateExpenseModal: React.FC<Props> = ({ campaignId, onClose, onCre
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <div>
-            <span className="eyebrow">FINANCIAL ACCOUNTABILITY</span>
-            <h2>Record Operational Expense</h2>
+    <div className="modal-backdrop-frosted" onClick={onClose}>
+      <div className="modal-card-frosted campaign-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="campaign-modal-header">
+          <div className="campaign-title-group">
+            <div className="campaign-badge-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <path d="M3 10h18M7 15h4" />
+              </svg>
+            </div>
+            <div>
+              <span className="eyebrow">Financial accountability</span>
+              <h2 className="campaign-modal-title">Record Operational Expense</h2>
+            </div>
           </div>
-          <button className="icon-button close-btn" onClick={onClose}>✕</button>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="modal-form">
-          {error && <div className="alert error">{error}</div>}
+        {error && <div className="auth-alert error">{error}</div>}
 
-          <label>
-            Expense Amount (TND)
+        <form onSubmit={handleSubmit} className="modal-form">
+          <div>
+            <label>Expense Amount (USD)</label>
             <input
               type="number"
-              step="0.001"
-              min="0.001"
+              step="0.01"
+              min="0.01"
               required
-              placeholder="e.g. 1250.000"
+              placeholder="e.g. 1250.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
-          </label>
+          </div>
 
-          <label>
-            Expense Item Description
+          <div>
+            <label>Expense Item Description</label>
             <textarea
               required
               rows={3}
@@ -77,24 +87,26 @@ export const CreateExpenseModal: React.FC<Props> = ({ campaignId, onClose, onCre
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-          </label>
+          </div>
 
-          <label>
-            Receipt / Invoice Proof URL (PDF or Image link)
+          <div>
+            <label>Receipt / Invoice Proof URL (PDF or Image link)</label>
             <input
               type="url"
               placeholder="https://example.com/receipts/invoice-401.pdf"
               value={proofUrl}
               onChange={(e) => setProofUrl(e.target.value)}
             />
-          </label>
+          </div>
 
-          <div className="modal-actions-row">
-            <button type="button" className="secondary" onClick={onClose}>
-              Cancel
-            </button>
-            <button type="submit" className="primary" disabled={loading}>
-              {loading ? "Recording..." : "Save Expense Record"}
+          <p style={{ fontSize: 12, color: "#64748b", lineHeight: 1.5 }}>
+            Expenses are hashed (SHA-256) and anchored on Hedera HCS automatically.
+          </p>
+
+          <div className="campaign-modal-footer">
+            <button type="button" className="btn sec" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn am" disabled={loading}>
+              {loading ? "Recording…" : "Save Expense Record"}
             </button>
           </div>
         </form>
@@ -102,3 +114,5 @@ export const CreateExpenseModal: React.FC<Props> = ({ campaignId, onClose, onCre
     </div>
   );
 };
+
+export default CreateExpenseModal;

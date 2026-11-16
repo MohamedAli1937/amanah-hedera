@@ -1,9 +1,11 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import type { LedgerTransaction } from "../types";
+import { getNetworkConfig, hashscanTopicUrl, hashscanTxUrl } from "../utils/network";
 
 interface Props {
   transactions: LedgerTransaction[];
   selectedCampaignFilterInitial?: string;
+  onBack?: () => void;
   onOpenReceipt?: (receiptCode: string) => void;
   onOpenTxAudit: (tx: LedgerTransaction) => void;
 }
@@ -11,13 +13,22 @@ interface Props {
 export const LedgerPage: React.FC<Props> = ({
   transactions,
   selectedCampaignFilterInitial = "all",
-  onOpenReceipt: _onOpenReceipt,
+  onBack,
+  onOpenReceipt,
   onOpenTxAudit,
 }) => {
   const [campaignFilter, setCampaignFilter] = useState(selectedCampaignFilterInitial);
   const [searchQuery, setSearchQuery] = useState("");
+  const [topicUrl, setTopicUrl] = useState<string | null>(null);
 
-  // Extract unique campaign names from real transactions
+  useEffect(() => {
+    let active = true;
+    getNetworkConfig().then((config) => {
+      if (active) setTopicUrl(hashscanTopicUrl(config.topic_id));
+    });
+    return () => { active = false; };
+  }, []);
+
   const uniqueCampaigns = useMemo(() => {
     const set = new Set<string>();
     transactions.forEach((tx) => {
@@ -26,17 +37,14 @@ export const LedgerPage: React.FC<Props> = ({
     return Array.from(set);
   }, [transactions]);
 
-  // Filter transactions
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
-      // Campaign filter
       if (
         campaignFilter !== "all" &&
         !tx.campaign_name.toLowerCase().includes(campaignFilter.toLowerCase())
       ) {
         return false;
       }
-      // Search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesCampaign = tx.campaign_name.toLowerCase().includes(q);
@@ -50,191 +58,217 @@ export const LedgerPage: React.FC<Props> = ({
   }, [transactions, campaignFilter, searchQuery]);
 
   return (
-    <div className="ledger-real-page-layout">
+    <div className="wrap">
       {/* Header */}
-      <div className="ledger-real-header">
-        <div className="ledger-title-strip">
-          <div className="hedera-live-beacon">
-            <span className="pulsing-emerald-dot"></span>
-            <span className="beacon-text">HEDERA CONSENSUS SERVICE (HCS)</span>
-            <span className="topic-badge">Topic ID: 0.0.10972610</span>
-          </div>
-          <h1 className="page-heading-title">Immutable Verification Ledger</h1>
-          <p className="ledger-page-subtitle">
-            Every humanitarian milestone, expense invoice, and aid distribution event is anchored to
-            Hedera Hashgraph testnet with sub-second Byzantine Fault Tolerant finality.
-          </p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "22px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          {onBack && (
+            <button
+              type="button"
+              className="btn ib sec"
+              onClick={onBack}
+              aria-label="Back to map"
+              title="Back to map"
+              style={{ width: "40px", height: "40px", minHeight: "40px" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+          )}
         </div>
-
-        {/* Quick Hedera Explorer Link */}
-        <div className="hedera-topic-link-box">
-          <span className="topic-label">Hedera Testnet Topic</span>
-          <a
-            href="https://hashscan.io/testnet/topic/0.0.10972610"
-            target="_blank"
-            rel="noreferrer"
-            className="btn-hashscan-topic"
-            title="Inspect Topic on HashScan"
+        <a
+          href={topicUrl ?? undefined}
+          target="_blank"
+          rel="noreferrer"
+          className="btn ib am"
+          aria-label="Open HashScan"
+          title="Open Topic on HashScan"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
           >
-            <span>0.0.10972610 on HashScan</span>
-            <span>↗</span>
-          </a>
-        </div>
+            <path d="M14 4h6v6M20 4L10 14M18 14v6H4V6h6" />
+          </svg>
+        </a>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="ledger-real-filter-bar">
-        <div className="filter-group-left">
-          <label>Filter by Campaign:</label>
+      {/* Filter & Search Bar */}
+      <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" }}>
+        <div style={{ width: "300px" }}>
           <select
             value={campaignFilter}
             onChange={(e) => setCampaignFilter(e.target.value)}
-            className="campaign-select-box"
+            aria-label="Campaign filter"
+            style={{
+              background: "rgba(255, 255, 255, 0.75)",
+              backdropFilter: "blur(12px)",
+              border: "1px solid rgba(255, 255, 255, 0.8)",
+            }}
           >
-            <option value="all">All Campaigns ({transactions.length} records)</option>
+            <option value="all">All campaigns · {transactions.length}</option>
             {uniqueCampaigns.map((name) => (
               <option key={name} value={name}>
                 {name}
               </option>
             ))}
           </select>
-
-          {campaignFilter !== "all" && (
-            <button
-              className="btn-clear-campaign-filter"
-              onClick={() => setCampaignFilter("all")}
-            >
-              Clear Filter ✕
-            </button>
-          )}
         </div>
-
-        <div className="filter-group-right">
-          <div className="search-ledger-input-wrap">
-            <svg
-              className="icon-search-sm"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search by Tx ID, Campaign, Receipt..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <button className="clear-btn" onClick={() => setSearchQuery("")}>
-                ✕
-              </button>
-            )}
-          </div>
+        <div style={{ flex: 1, minWidth: "240px" }}>
+          <input
+            type="text"
+            placeholder="Search Tx ID, campaign, receipt"
+            aria-label="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              background: "rgba(255, 255, 255, 0.75)",
+              backdropFilter: "blur(12px)",
+              border: "1px solid rgba(255, 255, 255, 0.8)",
+            }}
+          />
         </div>
       </div>
 
-      {/* Real Hedera Consensus Table */}
-      <div className="ledger-real-table-wrapper">
-        <table className="ledger-real-table">
-          <thead>
-            <tr>
-              <th scope="col" style={{ width: "26%" }}>
-                Hedera Transaction ID / Explorer
-              </th>
-              <th scope="col" style={{ width: "24%" }}>
-                Campaign
-              </th>
-              <th scope="col" style={{ width: "16%" }}>
-                Milestone Action
-              </th>
-              <th scope="col" style={{ width: "16%" }}>
-                Timestamp (UTC)
-              </th>
-              <th scope="col" style={{ width: "18%" }}>
-                HCS Consensus Status
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTransactions.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="empty-ledger-row">
-                  <div className="empty-ledger-content">
-                    <span className="empty-icon">🔍</span>
-                    <h4>No consensus transactions found</h4>
-                    <p>Try resetting the campaign filter or search query.</p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              filteredTransactions.map((tx) => (
-                <tr key={tx.id} onClick={() => onOpenTxAudit(tx)}>
-                  {/* Transaction ID & HashScan Link */}
-                  <td className="cell-tx-id">
-                    <div className="tx-link-row">
-                      <code className="tx-code-mono" title={tx.tx_id}>
-                        {tx.tx_id.length > 22
-                          ? `${tx.tx_id.slice(0, 14)}...${tx.tx_id.slice(-6)}`
-                          : tx.tx_id}
-                      </code>
+      {/* Table Card */}
+      <div className="card frosted" style={{ padding: 0, overflow: "hidden" }}>
+        {/* Table Header */}
+        <div
+          className="trow"
+          style={{
+            background: "#06402F",
+            color: "#BFE3D2",
+            fontSize: "11px",
+            fontWeight: 800,
+            letterSpacing: ".1em",
+            border: 0,
+          }}
+        >
+          <span>TRANSACTION</span>
+          <span>CAMPAIGN</span>
+          <span>MILESTONE</span>
+          <span>UTC TIME</span>
+          <span>STATUS</span>
+        </div>
 
-                      {tx.hashscan_url && (
-                        <a
-                          href={tx.hashscan_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="hashscan-link-chip"
-                          onClick={(e) => e.stopPropagation()}
-                          title="View on HashScan Testnet"
-                        >
-                          HashScan ↗
-                        </a>
-                      )}
-                    </div>
-                  </td>
+        {/* Rows */}
+        {filteredTransactions.length === 0 ? (
+          <div style={{ padding: "40px 20px", textAlign: "center", color: "#64748b" }}>
+            No ledger transactions matched your filters.
+          </div>
+        ) : (
+          filteredTransactions.map((tx) => {
+            const shortTx =
+              tx.tx_id.length > 20
+                ? `${tx.tx_id.slice(0, 10)}…${tx.tx_id.slice(-6)}`
+                : tx.tx_id;
 
-                  {/* Campaign */}
-                  <td className="cell-campaign-title">
-                    <strong className="campaign-strong">{tx.campaign_name}</strong>
-                  </td>
+            const milestone = (tx.allocation_title || "DONATION").toUpperCase();
+            const milestoneClass =
+              milestone === "PURCHASE" || milestone === "SHIPMENT"
+                ? "pill am"
+                : milestone === "CRITICAL"
+                ? "pill crit"
+                : "pill";
 
-                  {/* Milestone Action */}
-                  <td className="cell-milestone">
-                    <span className="milestone-badge">
-                      {tx.allocation_title || "Verified Milestone"}
-                    </span>
-                  </td>
+            const hashscanUrl = tx.hashscan_url || hashscanTxUrl(tx.tx_id) || undefined;
 
-                  {/* Timestamp */}
-                  <td className="cell-timestamp">
-                    <span className="timestamp-mono">{tx.date_time}</span>
-                  </td>
+            return (
+              <div key={tx.id} className="trow">
+                <span className="mono" style={{ fontSize: "13px" }}>
+                  {shortTx}{" "}
+                  <a
+                    href={hashscanUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "#0B5CAD", fontWeight: 700, textDecoration: "none", marginLeft: "4px" }}
+                  >
+                    HashScan
+                  </a>
+                </span>
 
-                  {/* Status & Verify Action */}
-                  <td className="cell-status-action">
-                    <div className="status-button-group">
-                      <span className="badge-confirmed-hcs">
-                        <span className="dot-green">✓</span> Confirmed by HCS
-                      </span>
-                      <button
-                        className="btn-audit-proof"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onOpenTxAudit(tx);
-                        }}
-                      >
-                        Audit Proof
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                <b
+                  style={{
+                    color: "#0B2A22",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    paddingRight: "8px",
+                  }}
+                >
+                  {tx.campaign_name}
+                </b>
+
+                <span>
+                  <span className={milestoneClass}>{milestone}</span>
+                </span>
+
+                <span className="mono" style={{ fontSize: "13px", color: "#41584F" }}>
+                  {tx.date_time}
+                </span>
+
+                <span style={{ display: "flex", gap: "10px", alignItems: "center", color: "#0F6B4F" }}>
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M8 12l3 3 5-6" />
+                  </svg>
+                  <button
+                    type="button"
+                    className="btn ib sec"
+                    aria-label="View proof"
+                    title="View Hedera cryptographic proof"
+                    style={{ width: "36px", height: "36px", minHeight: "36px" }}
+                    onClick={() => onOpenTxAudit(tx)}
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />
+                      <path d="M8.5 12l2.5 2.5 4.5-5" />
+                    </svg>
+                  </button>
+                  {tx.receipt_code && onOpenReceipt && (
+                    <button
+                      type="button"
+                      className="pill"
+                      style={{ cursor: "pointer", background: "#FEF3C7", color: "#8A4B08", border: 0 }}
+                      onClick={() => onOpenReceipt(tx.receipt_code)}
+                      title={`Verify receipt: ${tx.receipt_code}`}
+                    >
+                      Receipt
+                    </button>
+                  )}
+                </span>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

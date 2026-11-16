@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import type { ReceiptVerification } from "../types";
 import { api } from "../api";
+import { ReceiptPairingPanel } from "./ReceiptPairingPanel";
+import { ReceiptQr } from "./ReceiptQr";
 
 interface Props {
   initialToken?: string;
@@ -8,8 +10,11 @@ interface Props {
   onSelectCampaign?: (campaignId: number) => void;
 }
 
-export const ReceiptLookupModal: React.FC<Props> = ({ initialToken = "", onClose, onSelectCampaign }) => {
-  const [activeTab, setActiveTab] = useState<"code" | "scan">("code");
+export const ReceiptLookupModal: React.FC<Props> = ({
+  initialToken = "",
+  onClose,
+}) => {
+  const [activeTab, setActiveTab] = useState<"scan" | "code">("scan");
   const [tokenInput, setTokenInput] = useState(initialToken);
   const [loading, setLoading] = useState(false);
   const [receipt, setReceipt] = useState<ReceiptVerification | null>(null);
@@ -19,6 +24,7 @@ export const ReceiptLookupModal: React.FC<Props> = ({ initialToken = "", onClose
     if (initialToken) {
       setTokenInput(initialToken);
       verifyToken(initialToken);
+      setActiveTab("code");
     }
   }, [initialToken]);
 
@@ -31,10 +37,16 @@ export const ReceiptLookupModal: React.FC<Props> = ({ initialToken = "", onClose
     setReceipt(null);
 
     try {
-      const res = await api<ReceiptVerification>(`/donations/receipt/${encodeURIComponent(token)}`);
+      const res = await api<ReceiptVerification>(
+        `/donations/receipt/${encodeURIComponent(token)}`
+      );
       setReceipt(res);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Receipt token not found or invalid on Hedera HCS");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Receipt token not found or invalid on Hedera HCS"
+      );
     } finally {
       setLoading(false);
     }
@@ -45,175 +57,233 @@ export const ReceiptLookupModal: React.FC<Props> = ({ initialToken = "", onClose
     verifyToken(tokenInput);
   }
 
+  function switchTab(tab: "scan" | "code") {
+    setActiveTab(tab);
+    setReceipt(null);
+    setError(null);
+  }
+
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card receipt-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header receipt-modal-header">
-          <div>
-            <span className="eyebrow">IMMUTABLE AID VERIFICATION</span>
-            <h2>Verify Humanitarian Receipt</h2>
-          </div>
-          <button className="icon-button close-btn" onClick={onClose} aria-label="Close modal">
-            ✕
-          </button>
-        </div>
-
-        {/* Tab Selector: Code Entry vs. Scan Receipt */}
-        <div className="modal-tabs-bar">
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === "code" ? "active" : ""}`}
-            onClick={() => setActiveTab("code")}
-          >
-            ⌨️ Enter Receipt Code
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === "scan" ? "active" : ""}`}
-            onClick={() => setActiveTab("scan")}
-          >
-            Scan Receipt / Barcode
-          </button>
-        </div>
-
-        <div className="modal-body">
-          {activeTab === "scan" ? (
-            <div className="receipt-scanner-container">
-              <div
-                className="scanner-viewfinder"
+    <div className="modal-backdrop-frosted" onClick={onClose}>
+      <div
+        className="modal-card-frosted receipt-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="receipt-modal-header">
+          <div className="receipt-title-group">
+            <div className="receipt-badge-icon" aria-hidden="true">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                {/* Laser animation */}
-                <div
-                />
-
-                <div className="scanner-message">
-                  <>
-                    <div className="scanner-camera-mark">QR</div>
-                    <span>Align paper receipt QR / Code within frame</span>
-                  </>
-                </div>
-              </div>
-
-              <p className="muted scanner-help">
-                Scan the QR code printed on your NGO receipt. If you cannot scan it, use the receipt code entry tab.
-              </p>
+                <rect x="4" y="4" width="6" height="6" rx="1" />
+                <rect x="14" y="4" width="6" height="6" rx="1" />
+                <rect x="4" y="14" width="6" height="6" rx="1" />
+                <path d="M14 14h3v3M20 14v6h-6" />
+              </svg>
             </div>
-          ) : (
-            <>
-              <p className="muted receipt-intro">
-                Enter your unique donation receipt token to verify your contribution and trace its impact across the Hedera HCS aid ledger.
-              </p>
+            <div>
+              <span className="eyebrow">Hedera HCS Audit</span>
+              <h2 className="receipt-modal-title">Verify Receipt</h2>
+            </div>
+          </div>
 
-              <form onSubmit={handleSearch} className="receipt-search-form">
-                <div className="input-group">
-                  <input
-                    type="text"
-                    placeholder="e.g. AMN-GAZA-8891-PROOF or your issued token..."
-                    value={tokenInput}
-                    onChange={(e) => setTokenInput(e.target.value)}
-                    required
-                  />
-                  <button type="submit" className="primary" disabled={loading}>
-                    {loading ? "Verifying..." : "Verify"}
-                  </button>
-                </div>
-              </form>
+          <button
+            type="button"
+            className="modal-close"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
-            </>
-          )}
+        {/* Recessed Segmented Switcher */}
+        <div className="receipt-seg" role="tablist" aria-label="Verification method">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "scan"}
+            className={`receipt-seg-btn ${activeTab === "scan" ? "is-active" : ""}`}
+            onClick={() => switchTab("scan")}
+          >
+            Scan QR
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "code"}
+            className={`receipt-seg-btn ${activeTab === "code" ? "is-active" : ""}`}
+            onClick={() => switchTab("code")}
+          >
+            Enter Code
+          </button>
+        </div>
 
-          {error && <div className="alert error" style={{ marginTop: "1rem" }}>{error}</div>}
+        {/* Scan QR Tab – live PC ↔ phone pairing */}
+        {activeTab === "scan" && (
+          <ReceiptPairingPanel
+            onReceipt={(verified) => {
+              setReceipt(verified);
+              setError(null);
+              setActiveTab("code");
+            }}
+          />
+        )}
 
-          {receipt && (
-            <div className="receipt-certificate" style={{ marginTop: "1.25rem" }}>
-              <div className="certificate-header">
-                <div className="cert-brand">
-                  <span className="brand-mark-sm">A</span>
-                  <div>
-                    <h4>Amanah Transparency Certificate</h4>
-                    <span className="cert-subtitle">Hedera Consensus Testnet Verified</span>
-                  </div>
-                </div>
-                <span className={`status-badge ${receipt.is_verified_onchain ? "verified" : ""}`}>
-                  {receipt.is_verified_onchain ? "✓ Hedera Testnet Verified" : "Verified Confirmed"}
+        {/* Code Entry Tab */}
+        {activeTab === "code" && (
+          <form onSubmit={handleSearch} className="receipt-code-form">
+            <div>
+              <label>Receipt Token</label>
+              <input
+                type="text"
+                className="mono"
+                placeholder="e.g. REC-584743 or receipt token"
+                value={tokenInput}
+                onChange={(e) => {
+                  setTokenInput(e.target.value);
+                  if (receipt) setReceipt(null);
+                  if (error) setError(null);
+                }}
+                autoFocus
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading || !tokenInput.trim()}
+              className="btn am receipt-submit-btn"
+            >
+              {loading ? "Verifying on Hedera..." : "Verify Receipt"}
+            </button>
+          </form>
+        )}
+
+        {/* Error Message */}
+        {error && <div className="auth-alert error receipt-alert">{error}</div>}
+
+        {/* Verified Receipt Result Card */}
+        {receipt && (
+          <div className="receipt-result-card">
+            <div className="receipt-result-banner">
+              <span className="proof-status-dot" aria-hidden="true" />
+              <span className="receipt-result-status">
+                Authentic Hedera HCS Record
+              </span>
+              <span className="pill">Verified</span>
+            </div>
+
+            <div className="receipt-meta-grid">
+              <div className="receipt-meta-cell">
+                <span className="receipt-meta-label">Campaign</span>
+                <span className="receipt-meta-value">
+                  {receipt.campaign_title}
                 </span>
               </div>
 
-              <div className="certificate-body">
-                <div className="cert-row">
-                  <span className="cert-label">Receipt Token:</span>
-                  <code className="cert-value highlight-code">{receipt.receipt_token}</code>
-                </div>
-                <div className="cert-row">
-                  <span className="cert-label">Donation Amount:</span>
-                  <span className="cert-amount">${Number(receipt.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })} USD</span>
-                </div>
-                <div className="cert-row">
-                  <span className="cert-label">Campaign:</span>
-                  <span className="cert-value strong">{receipt.campaign_title}</span>
-                </div>
-                <div className="cert-row">
-                  <span className="cert-label">Managing NGO:</span>
-                  <span className="cert-value">{receipt.ngo_name} ({receipt.ngo_verification_status})</span>
-                </div>
-                <div className="cert-row">
-                  <span className="cert-label">HCS Topic:</span>
-                  <span className="cert-value"><code>{receipt.hedera_topic_id || "0.0.10972610"}</code></span>
-                </div>
-                {receipt.hedera_sequence_number && (
-                  <div className="cert-row">
-                    <span className="cert-label">HCS Sequence #:</span>
-                    <span className="cert-value highlight-code"><strong>#{receipt.hedera_sequence_number}</strong></span>
-                  </div>
-                )}
-                {receipt.hedera_transaction_id && (
-                  <div className="cert-row">
-                    <span className="cert-label">Transaction ID:</span>
-                    <code className="cert-value" style={{ fontSize: "0.78rem" }}>{receipt.hedera_transaction_id}</code>
-                  </div>
-                )}
-                {receipt.consensus_timestamp && (
-                  <div className="cert-row">
-                    <span className="cert-label">Consensus Timestamp:</span>
-                    <span className="cert-value" style={{ fontSize: "0.82rem" }}>{receipt.consensus_timestamp}</span>
-                  </div>
-                )}
-                <div className="cert-row">
-                  <span className="cert-label">Aid Delivery Updates:</span>
-                  <span className="cert-value">{receipt.events_count} Hedera-anchored milestones</span>
-                </div>
+              <div className="receipt-meta-cell">
+                <span className="receipt-meta-label">Amount</span>
+                <span className="receipt-meta-value is-amount mono">
+                  ${Number(receipt.amount).toLocaleString()}
+                </span>
               </div>
 
-              {receipt.hashscan_tx_url && (
-                <div style={{ marginTop: "0.85rem" }}>
-                  <a
-                    href={receipt.hashscan_tx_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="external-link-btn"
-                    style={{ display: "inline-flex", width: "100%", justifyContent: "center", textDecoration: "none" }}
-                  >
-                    Inspect On-Chain Proof on HashScan ↗
-                  </a>
+              {receipt.donor_name && (
+                <div className="receipt-meta-cell">
+                  <span className="receipt-meta-label">Donor</span>
+                  <span className="receipt-meta-value">
+                    {receipt.donor_name}
+                  </span>
                 </div>
               )}
 
-              {onSelectCampaign && (
-                <button
-                  type="button"
-                  className="primary full"
-                  style={{ marginTop: "0.75rem" }}
-                  onClick={() => {
-                    onSelectCampaign(receipt.campaign_id);
-                    onClose();
-                  }}
-                >
-                  Track Campaign Impact & Journey →
-                </button>
+              {receipt.hedera_sequence_number && (
+                <div className="receipt-meta-cell">
+                  <span className="receipt-meta-label">HCS Sequence</span>
+                  <span className="receipt-meta-value mono">
+                    #{receipt.hedera_sequence_number}
+                  </span>
+                </div>
               )}
             </div>
-          )}
-        </div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "14px",
+                alignItems: "center",
+                padding: "12px 0",
+                borderTop: "1px solid rgba(6,64,47,0.12)",
+                borderBottom: "1px solid rgba(6,64,47,0.12)",
+              }}
+            >
+              <ReceiptQr token={receipt.receipt_token} size={96} label="Receipt QR" />
+              <div style={{ minWidth: 0 }}>
+                <span className="receipt-meta-label">Receipt code</span>
+                <span className="mono" style={{ display: "block", fontSize: "12px", wordBreak: "break-all", color: "#0B2A22" }}>
+                  {receipt.receipt_token}
+                </span>
+                <span style={{ display: "block", marginTop: "6px", fontSize: "11px", color: "#64748b", lineHeight: 1.45 }}>
+                  Scan this QR on a phone to send the receipt to a paired screen.
+                </span>
+              </div>
+            </div>
+
+            <div className="receipt-result-actions">
+              <button
+                type="button"
+                className="btn sec"
+                onClick={() => {
+                  setReceipt(null);
+                  setError(null);
+                  setTokenInput("");
+                }}
+              >
+                Verify Another
+              </button>
+
+              {receipt.hashscan_tx_url && (
+                <a
+                  href={receipt.hashscan_tx_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn am"
+                >
+                  <span>View on HashScan</span>
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M14 4h6v6M20 4L10 14M18 14v6H4V6h6" />
+                  </svg>
+                </a>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

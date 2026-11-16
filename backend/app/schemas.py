@@ -49,6 +49,12 @@ class CampaignCreate(BaseModel):
     goal: Decimal = Field(gt=0, max_digits=12, decimal_places=3)
     ngo_id: int
     donation_link: HttpUrl | None = None
+    location_name: str | None = None
+    region: str | None = None
+    urgency: str | None = None
+    lat: float | None = None
+    lng: float | None = None
+    image_url: str | None = None
 
 
 class CampaignUpdate(BaseModel):
@@ -57,6 +63,12 @@ class CampaignUpdate(BaseModel):
     goal: Decimal | None = Field(None, gt=0, max_digits=12, decimal_places=3)
     status: Literal["draft", "active", "goal_reached", "completed", "suspended"] | None = None
     donation_link: HttpUrl | None = None
+    location_name: str | None = None
+    region: str | None = None
+    urgency: str | None = None
+    lat: float | None = None
+    lng: float | None = None
+    image_url: str | None = None
 
 
 class CampaignRead(ORMBase):
@@ -105,6 +117,13 @@ class ExpenseRead(ORMBase):
     description: str
     proof_url: str | None
     created_at: datetime
+    event_hash: str | None = None
+    hedera_topic_id: str | None = None
+    hedera_transaction_id: str | None = None
+    hedera_sequence_number: int | None = None
+    hedera_status: str = "not_anchored"
+    hashscan_tx_url: str | None = None
+    hashscan_topic_url: str | None = None
 
 
 class AidEventCreate(BaseModel):
@@ -126,6 +145,14 @@ class AidEventRead(ORMBase):
     hedera_transaction_id: str | None
     hedera_sequence_number: int | None
     hedera_status: str
+    review_status: str = "pending"
+    review_note: str | None = None
+    reviewed_at: datetime | None = None
+
+
+class AidEventReview(BaseModel):
+    decision: Literal["approve", "reject"]
+    note: str | None = Field(default=None, max_length=1000)
 
 
 class AidEventVerification(BaseModel):
@@ -180,3 +207,43 @@ class ModeratorRead(ORMBase):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class PairingSubmit(BaseModel):
+    receipt_token: str = Field(min_length=4, max_length=128)
+
+
+class CampaignUpdateCreate(BaseModel):
+    kind: Literal["update", "photo", "thanks", "purchase", "shipment", "distribution"]
+    message: str = Field(min_length=3, max_length=4000)
+    media_url: HttpUrl | None = None
+
+
+class CampaignUpdateRead(ORMBase):
+    id: int
+    campaign_id: int
+    kind: str
+    message: str
+    media_url: str | None
+    created_at: datetime
+    event_hash: str | None = None
+    hedera_topic_id: str | None = None
+    hedera_transaction_id: str | None = None
+    hedera_sequence_number: int | None = None
+    hedera_status: str
+    hashscan_tx_url: str | None = None
+    hashscan_topic_url: str | None = None
+
+
+class ChainLink(BaseModel):
+    stage: Literal["donation", "expense", "shipment", "distribution", "update"]
+    record_id: str
+    title: str
+    detail: str
+    amount: Decimal | None = None
+    created_at: datetime | None = None
+    proof_url: str | None = None
+    hedera_status: str | None = None
+    hashscan_tx_url: str | None = None
+    hashscan_topic_url: str | None = None
+    anonymous_ref: str | None = None

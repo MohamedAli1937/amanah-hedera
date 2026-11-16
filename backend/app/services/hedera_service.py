@@ -20,6 +20,14 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
+def hashscan_transaction_url(transaction_id: str | None) -> str | None:
+    return f"https://hashscan.io/testnet/transaction/{transaction_id}" if transaction_id else None
+
+
+def hashscan_topic_url(topic_id: str | None) -> str | None:
+    return f"https://hashscan.io/testnet/topic/{topic_id}" if topic_id else None
+
+
 def hash_event(event: dict) -> str:
     canonical = json.dumps(
         event,
@@ -48,7 +56,7 @@ def submit_event_hash(event_hash: str) -> dict:
     )
     topic_id = TopicId.from_string(os.environ["HEDERA_TOPIC_ID"])
 
-    client = Client(Network("testnet"))
+    client = Client(Network(os.getenv("HEDERA_NETWORK", "testnet")))
     client.set_operator(account_id, private_key)
 
     try:
@@ -86,7 +94,7 @@ def submit_donation_hash(receipt_token: str, campaign_id: int, amount: float, do
     )
     topic_id = TopicId.from_string(os.environ["HEDERA_TOPIC_ID"])
 
-    client = Client(Network("testnet"))
+    client = Client(Network(os.getenv("HEDERA_NETWORK", "testnet")))
     client.set_operator(account_id, private_key)
 
     try:

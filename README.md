@@ -175,7 +175,7 @@ pnpm dev
 | --- | --- |
 | `VITE_API_URL` | Backend base URL |
 | `VITE_SITE_URL` | Public frontend URL embedded in pairing QR codes |
-| `VITE_CARTO_KEY` | Optional public CARTO basemap key |
+| `VITE_CARTO_KEY` | Public CARTO basemap key (frontend build-time only) |
 
 ## Demo accounts (on Neon)
 

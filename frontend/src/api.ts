@@ -1,4 +1,12 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+const configuredApiUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+const API_URL =
+  configuredApiUrl || (import.meta.env.DEV ? "http://127.0.0.1:8000" : "");
+
+if (!API_URL) {
+  console.error(
+    "[Amanah] VITE_API_URL is not configured. Set it in Vercel (Environment Variables) and redeploy."
+  );
+}
 
 export const getToken = () => localStorage.getItem("amanah_token");
 export const setToken = (token: string) => localStorage.setItem("amanah_token", token);

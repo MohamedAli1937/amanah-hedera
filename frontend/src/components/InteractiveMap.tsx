@@ -36,7 +36,7 @@ const BASEMAP_STYLE_URL = withKey(
   "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
 );
 
-const FALLBACK_SHOW_LABELS = false;
+const FALLBACK_SHOW_LABELS = true;
 
 const BASEMAP_RASTER_FALLBACK = withKey(
   `https://basemaps.cartocdn.com/rastertiles/${

@@ -10,7 +10,6 @@ interface Props {
   onOpenReceipt: () => void;
 }
 
-// Persists across page remounts so the orange pill always slides from the previous tab
 let lastTabIndex: number | null = null;
 
 export const Navbar: React.FC<Props> = ({
@@ -45,7 +44,6 @@ export const Navbar: React.FC<Props> = ({
 
   return (
     <header className="nav cpn-unified">
-      {/* Brand Logo */}
       <div
         className="logo"
         onClick={() => onNavigate("campaigns")}
@@ -60,7 +58,6 @@ export const Navbar: React.FC<Props> = ({
         <span>Amanah</span>
       </div>
 
-      {/* Central Tabs Navigation Pill */}
       <nav className="tabs" aria-label="Main navigation">
         {slideIndex >= 0 && (
           <span
@@ -104,7 +101,6 @@ export const Navbar: React.FC<Props> = ({
         </button>
       </nav>
 
-      {/* Right Actions */}
       <div className="right">
         <button
           type="button"

@@ -237,7 +237,6 @@ def create_event(
     db.add(event)
     db.commit()
     db.refresh(event)
-    # Milestones are only hashed and anchored after a moderator approves them.
     return event
 
 
@@ -589,7 +588,6 @@ def get_donation_receipt(receipt_token: str, db: Session = Depends(get_db)):
 
 @router.get("/events/{event_id}/verify", response_model=schemas.AidEventVerification)
 def verify_event(event_id: str, db: Session = Depends(get_db)):
-    # Check if event_id is a donation record
     str_id = str(event_id)
     if str_id.startswith("donation-"):
         try:
@@ -658,7 +656,6 @@ def verify_event(event_id: str, db: Session = Depends(get_db)):
             ),
         }
 
-    # Otherwise treat as numeric aid event
     try:
         numeric_id = int(str_id.replace("real-", ""))
     except ValueError:
@@ -679,7 +676,6 @@ def verify_event(event_id: str, db: Session = Depends(get_db)):
 
     calculated_hash = hash_event(canonical_payload)
 
-    # STRICT verification: query the live Hedera Mirror Node
     mirror_check = verify_topic_message(
         topic_id=event.hedera_topic_id,
         sequence_number=event.hedera_sequence_number,

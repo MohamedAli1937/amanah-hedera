@@ -18,7 +18,6 @@ type SidebarView =
   | { kind: "campaign-detail"; campaign: Campaign }
   | { kind: "ngo-detail"; ngo: NGO };
 
-// Urgency dot: colored circle that blinks (faster = more urgent). Styles live in App.css
 function UrgencyDot({ urgency, size = 12 }: { urgency?: string; size?: number }) {
   const level = urgency === "critical" || urgency === "high" ? urgency : "medium";
   return (
@@ -32,7 +31,6 @@ function UrgencyDot({ urgency, size = 12 }: { urgency?: string; size?: number })
   );
 }
 
-// Donate icon: gift (giving)
 function DonateIcon({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -44,7 +42,6 @@ function DonateIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-// Verified badge: shield with a check, shown right after an NGO name
 function VerifiedShield({ size = 16, color = "#0F6B4F", title = "Verified on Hedera" }: { size?: number; color?: string; title?: string }) {
   return (
     <svg
@@ -68,7 +65,6 @@ function VerifiedShield({ size = 16, color = "#0F6B4F", title = "Verified on Hed
   );
 }
 
-// Small single-color progress ring (campaign cards)
 function ProgressRing({ percent, size = 44, stroke = 4 }: { percent: number; size?: number; stroke?: number }) {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
@@ -100,14 +96,12 @@ function formatMoney(n: number) {
   return n >= 1000 ? `$${(n / 1000).toFixed(0)}k` : `$${n}`;
 }
 
-// Width the sidebar covers on the map (14px margin + 410px card + 14px margin); 0 on phones / when closed
 function getLeftInset(open: boolean, expanded = false) {
   if (!open || typeof window === "undefined" || window.innerWidth < 700) return 0;
   const width = expanded ? Math.min(980, window.innerWidth - 40) : 410;
   return width + 28;
 }
 
-// Shared style for the round map control buttons
 const mapBtnStyle: React.CSSProperties = {
   width: "44px",
   height: "44px",
@@ -123,7 +117,6 @@ const mapBtnStyle: React.CSSProperties = {
   border: "1px solid rgba(255,255,255,0.8)",
 };
 
-// Donut SVG for campaign detail card
 function DonutProgress({ percent, size = 68 }: { percent: number; size?: number }) {
   const r = size * 0.38;
   const circ = 2 * Math.PI * r;
@@ -169,7 +162,6 @@ export const CampaignsPage: React.FC<Props> = ({
   const mapRef = useRef<MapHandle>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
 
-  // Load verified public NGOs
   useEffect(() => {
     api<NGO[]>("/ngos/public").then((data) => {
       if (Array.isArray(data) && data.length > 0) {
@@ -178,9 +170,6 @@ export const CampaignsPage: React.FC<Props> = ({
     }).catch(() => {});
   }, []);
 
-  // If a campaign was requested by ID (e.g. from Profile page or URL).
-  // Handled once per id, so a later campaigns refresh doesn't re-select it
-  // after the user clicked away on the map.
   const handledIdRef = useRef<number | null>(null);
   useEffect(() => {
     if (selectedCampaignId && handledIdRef.current !== selectedCampaignId) {
@@ -198,7 +187,6 @@ export const CampaignsPage: React.FC<Props> = ({
     }
   }, [selectedCampaignId, campaigns]);
 
-  // Esc: close detail first (back to list), then close the sidebar
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key !== "Escape" || !isSidebarOpen) return;
@@ -217,7 +205,6 @@ export const CampaignsPage: React.FC<Props> = ({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isSidebarOpen, view, activeTab]);
 
-  // Derive NGO names from campaigns for the filter dropdown
   const uniqueNgos = useMemo(() => {
     const set = new Set<string>();
     campaigns.forEach((c) => {
@@ -251,7 +238,7 @@ export const CampaignsPage: React.FC<Props> = ({
 
   function openCampaignDetail(camp: Campaign) {
     setHighlightedCampaign(camp);
-    setIsSidebarOpen(true); // reopen the sidebar if it was closed
+    setIsSidebarOpen(true); 
     if (camp.lat && camp.lng) {
       mapRef.current?.panTo(camp.lat, camp.lng, getLeftInset(true, detailExpanded));
     }
@@ -259,9 +246,6 @@ export const CampaignsPage: React.FC<Props> = ({
     setView({ kind: "campaign-detail", campaign: camp });
   }
 
-  // Clicking a pin on the map: reopen the sidebar on the Campaigns tab with that campaign's card
-  // Clicking empty map space (camp === null): leave the campaign. The sidebar goes
-  // back to its list, and stays closed if it was closed (no reopen, no pan).
   function handleMapSelect(camp: Campaign | null) {
     if (camp) {
       setActiveTab("campaigns");
@@ -293,7 +277,6 @@ export const CampaignsPage: React.FC<Props> = ({
     setView(activeTab === "ngos" ? { kind: "ngo-list" } : { kind: "campaign-list" });
   }
 
-  // Swipe left on the sidebar closes it; swipe right from the left edge opens it (touch screens)
   function handleSwipeStart(e: React.TouchEvent) {
     const t = e.touches[0];
     swipeStart.current = { x: t.clientX, y: t.clientY };
@@ -310,7 +293,6 @@ export const CampaignsPage: React.FC<Props> = ({
     if (direction === "open" && dx > 50) setIsSidebarOpen(true);
   }
 
-  // Round button that hides the sidebar
   const CloseSidebarButton = ({ size = 38 }: { size?: number }) => (
     <button
       type="button"
@@ -338,7 +320,6 @@ export const CampaignsPage: React.FC<Props> = ({
     </button>
   );
 
-  // Icon-only back button
   const BackButton = ({ onClick }: { onClick: () => void }) => (
     <button
       type="button"
@@ -366,7 +347,6 @@ export const CampaignsPage: React.FC<Props> = ({
     </button>
   );
 
-  // ---- FULL CAMPAIGN DETAIL CARD ----
   const renderCampaignDetail = (camp: Campaign) => {
     const goal = camp.goal || 1;
     const collected = camp.collected_amount || 0;
@@ -387,7 +367,6 @@ export const CampaignsPage: React.FC<Props> = ({
       <>
       <div style={{ display: "grid", gridTemplateColumns: detailExpanded ? "minmax(0, 1.15fr) minmax(0, 1fr)" : "1fr", gap: detailExpanded ? 18 : 12, height: "100%", boxSizing: "border-box", overflow: "hidden", paddingRight: "4px", minHeight: 0 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0, minHeight: 0, flex: "1 1 auto", overflow: "hidden" }}>
-        {/* Top row: back + status + urgency */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <BackButton onClick={goBackToList} />
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -416,7 +395,6 @@ export const CampaignsPage: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Hero image with donut + title */}
         <div
           style={{
             position: "relative",
@@ -461,7 +439,6 @@ export const CampaignsPage: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Organizer chip */}
         <button
           type="button"
           onClick={() => openNgoDetailByCamp(camp)}
@@ -514,7 +491,6 @@ export const CampaignsPage: React.FC<Props> = ({
           </svg>
         </button>
 
-        {/* Stat tiles */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
           {stats.map((st) => (
             <div
@@ -535,7 +511,6 @@ export const CampaignsPage: React.FC<Props> = ({
           ))}
         </div>
 
-        {/* Short description – fills the space above the action buttons */}
         <div
           style={{
             flex: "1 1 auto",
@@ -567,7 +542,6 @@ export const CampaignsPage: React.FC<Props> = ({
           </p>
         </div>
 
-        {/* Actions: ledger + donate + details in one line */}
         <div style={{ display: "flex", gap: "8px", alignItems: "center", flex: "none", paddingTop: "4px" }}>
           <button
             type="button"
@@ -623,7 +597,6 @@ export const CampaignsPage: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Hedera trust line (bottom of the card) */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "7px", fontSize: "11px", fontWeight: 700, color: "#0F6B4F" }}>
           <VerifiedShield size={14} title="Anchored on Hedera HCS" />
           <span>Every donation is verified and anchored on Hedera HCS</span>
@@ -650,11 +623,9 @@ export const CampaignsPage: React.FC<Props> = ({
     );
   };
 
-  // ---- NGO DETAIL CARD (in-place) ----
   const renderNgoDetail = (ngo: NGO) => {
     const relatedCampaigns = campaigns.filter((c) => c.ngo_id === ngo.id);
     const raised = relatedCampaigns.reduce((sum, c) => sum + (c.collected_amount || 0), 0);
-    // FUTURE: add `description` to the NGO type, then drop this cast.
     const description = (ngo as NGO & { description?: string }).description;
 
     return (
@@ -664,7 +635,6 @@ export const CampaignsPage: React.FC<Props> = ({
           <CloseSidebarButton size={36} />
         </div>
 
-        {/* NGO header */}
         <div style={{ background: "linear-gradient(135deg, #06402F, #0F6B4F)", borderRadius: "22px", padding: "18px", color: "#fff", boxShadow: "0 10px 28px rgba(6,64,47,0.2)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "14px" }}>
             <div
@@ -712,7 +682,6 @@ export const CampaignsPage: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* About: reserved space for the NGO description (future column) */}
         <div
           style={{
             background: "rgba(255,255,255,0.72)",
@@ -731,7 +700,6 @@ export const CampaignsPage: React.FC<Props> = ({
           </p>
         </div>
 
-        {/* Related campaigns */}
         <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
           <span style={{ fontSize: "12px", fontWeight: 800, color: "#41584F", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px" }}>
             Active Campaigns ({relatedCampaigns.length})
@@ -773,7 +741,6 @@ export const CampaignsPage: React.FC<Props> = ({
     );
   };
 
-  // Shared search input (icon only, no placeholder) for campaigns and NGOs
   const renderSearchInput = (value: string, onChange: (v: string) => void, label: string) => (
     <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
       <svg
@@ -805,14 +772,11 @@ export const CampaignsPage: React.FC<Props> = ({
     </div>
   );
 
-  // ---- CAMPAIGN LIST VIEW ----
   const renderCampaignList = () => (
     <>
-      {/* Search & Filter Row: one line, no placeholder */}
       <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "12px", width: "100%", boxSizing: "border-box" }}>
         {renderSearchInput(searchQuery, setSearchQuery, "Search campaigns")}
 
-        {/* Urgency filter: All / Critical / High as colored circles */}
         <div
           role="group"
           aria-label="Filter by urgency"
@@ -857,7 +821,6 @@ export const CampaignsPage: React.FC<Props> = ({
           })}
         </div>
 
-        {/* NGO filter: icon button wrapping a transparent native select */}
         {uniqueNgos.length > 0 && (
           <div
             title={selectedNgo === "all" ? "Filter by NGO" : `NGO: ${selectedNgo}`}
@@ -894,7 +857,6 @@ export const CampaignsPage: React.FC<Props> = ({
         )}
       </div>
 
-      {/* Scrollable Campaign Cards List */}
       <div style={{ flex: 1, overflowY: "auto", paddingRight: "2px" }}>
         {filteredCampaigns.length === 0 ? (
           <div style={{ padding: "40px 10px", textAlign: "center", color: "#41584F", fontSize: "14px" }}>
@@ -932,7 +894,6 @@ export const CampaignsPage: React.FC<Props> = ({
                   boxSizing: "border-box",
                 }}
               >
-                {/* Image */}
                 <div style={{ width: "84px", height: "84px", borderRadius: "16px", flex: "none", overflow: "hidden", background: "#0B2A22" }}>
                   <img
                     src={camp.image_url || getRealFallbackImage(camp.urgency, camp.title)}
@@ -945,7 +906,6 @@ export const CampaignsPage: React.FC<Props> = ({
                   />
                 </div>
 
-                {/* Title, NGO, amounts + donate */}
                 <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                   <div style={{ minWidth: 0 }}>
                     <b style={{ fontSize: "14px", color: "#0B2A22", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
@@ -1000,7 +960,6 @@ export const CampaignsPage: React.FC<Props> = ({
                   </div>
                 </div>
 
-                {/* Urgency dot (top) + funding ring (bottom) */}
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", flex: "none", width: "46px" }}>
                   <span style={{ alignSelf: "flex-end", display: "inline-flex", margin: "3px 4px 0 0" }}>
                     <UrgencyDot urgency={camp.urgency} size={11} />
@@ -1015,7 +974,6 @@ export const CampaignsPage: React.FC<Props> = ({
     </>
   );
 
-  // ---- NGO LIST VIEW ----
   const renderNgoList = () => (
     <>
       <div style={{ display: "flex", marginBottom: "12px" }}>{renderSearchInput(ngoQuery, setNgoQuery, "Search NGOs")}</div>
@@ -1112,14 +1070,12 @@ export const CampaignsPage: React.FC<Props> = ({
         margin: 0,
         padding: 0,
       }}>
-      {/* Full-viewport Leaflet map */}
       <InteractiveMap
         ref={mapRef}
         campaigns={filteredCampaigns}
         selectedCampaign={highlightedCampaign}
         onSelectCampaign={handleMapSelect}
         leftInset={getLeftInset(isSidebarOpen, detailExpanded)} />
-      {/* Re-open sidebar button: icon only, animates in as the sidebar closes */}
       <button
         type="button"
         className={`sidebar-fab ${isSidebarOpen ? "fab-hidden" : "fab-visible"}`}
@@ -1135,7 +1091,6 @@ export const CampaignsPage: React.FC<Props> = ({
         {filteredCampaigns.length > 0 && <span className="sidebar-fab-badge">{filteredCampaigns.length}</span>}
       </button>
 
-      {/* Invisible left-edge strip so a swipe right can open the sidebar (touch screens only) */}
       {!isSidebarOpen && (
         <div
           className="sidebar-edge-swipe"
@@ -1144,7 +1099,6 @@ export const CampaignsPage: React.FC<Props> = ({
         />
       )}
 
-      {/* Frosted Sidebar: contained, full height, no filter overflow */}
       <div
           className={`map-sidebar-frosted ${isSidebarOpen ? "sidebar-open" : "sidebar-closed"}`}
           aria-hidden={!isSidebarOpen}
@@ -1172,7 +1126,6 @@ export const CampaignsPage: React.FC<Props> = ({
             overflow: "hidden",
           }}
         >
-          {/* Tabs (with small counts) + close button. No title header. */}
           {!isInDetail && (
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
               <div
@@ -1236,7 +1189,6 @@ export const CampaignsPage: React.FC<Props> = ({
             </div>
           )}
 
-          {/* Main content area */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
             {view.kind === "campaign-list" && renderCampaignList()}
             {view.kind === "ngo-list" && renderNgoList()}
@@ -1245,7 +1197,6 @@ export const CampaignsPage: React.FC<Props> = ({
           </div>
         </div>
 
-      {/* Map controls: center on campaigns, zoom in, zoom out */}
       <div
         style={{
           position: "absolute",

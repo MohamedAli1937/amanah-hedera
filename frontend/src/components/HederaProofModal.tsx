@@ -101,7 +101,6 @@ export const HederaProofModal: React.FC<Props> = ({
         className="modal-card-frosted proof-modal"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="proof-modal-header">
           <div className="proof-title-group">
             <div className="proof-badge-icon" aria-hidden="true">
@@ -143,7 +142,6 @@ export const HederaProofModal: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Consensus Status Well */}
         <div
           className={`proof-status-well ${
             loading ? "is-checking" : isConfirmed ? "is-verified" : "is-pending"
@@ -164,7 +162,6 @@ export const HederaProofModal: React.FC<Props> = ({
 
         {error && <div className="auth-alert error">{error}</div>}
 
-        {/* 2x2 Telemetry Grid */}
         <div className="proof-meta-grid">
           <div className="proof-meta-cell">
             <span className="proof-meta-label">Event Type</span>
@@ -199,7 +196,6 @@ export const HederaProofModal: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Transaction ID Well */}
         <div className="proof-section">
           <label>Hedera Transaction ID</label>
           <div className="proof-copy-well">
@@ -245,7 +241,6 @@ export const HederaProofModal: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Cryptographic SHA-256 Hash Well */}
         {displayHash && (
           <div className="proof-section">
             <label>SHA-256 Event Digest</label>
@@ -291,7 +286,6 @@ export const HederaProofModal: React.FC<Props> = ({
           </div>
         )}
 
-        {/* Footer Action Bar */}
         <div className="proof-footer">
           {verification?.canonical_payload ? (
             <button

@@ -104,7 +104,7 @@ stateDiagram-v2
 | --- | --- |
 | Frontend | React 19, TypeScript, Vite, Leaflet + MapLibre, `qrcode` |
 | Backend | FastAPI, SQLAlchemy, Pydantic, Uvicorn, `hiero-sdk-python` |
-| Database | Neon Postgres (single source of truth) |
+| Database | Neon Postgres holds application state; Hedera HCS holds the proof |
 | Blockchain | Hedera Consensus Service (testnet), verified via mirror node |
 | Hosting | Vercel (frontend), Render (backend) |
 
@@ -135,7 +135,7 @@ amanah/
 
 ## Local setup
 
-> **Neon is the single source of truth.** The app requires `DATABASE_URL` to be set. On a machine
+> **Neon holds state; Hedera holds proof.** The app requires `DATABASE_URL` to be set. On a machine
 > where outbound PostgreSQL (port 5432) is blocked, you can override it with a temporary SQLite
 > URL for development only:
 > `$env:DATABASE_URL="sqlite:///./amanah.db"`

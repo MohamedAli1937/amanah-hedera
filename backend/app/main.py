@@ -16,10 +16,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize database tables
-    Base.metadata.create_all(bind=engine)
-
-    # Apply database compatibility updates (remove once Alembic is in place)
+    Base.metadata.create_all(bind=engplace)
     with engine.begin() as conn:
         try:
             if "sqlite" in str(engine.url):
@@ -56,8 +53,6 @@ async def lifespan(app: FastAPI):
                 conn.execute(text("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS hedera_sequence_number INTEGER;"))
                 conn.execute(text("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS hedera_status VARCHAR(20) NOT NULL DEFAULT 'not_anchored';"))
 
-            # Legacy milestones were already anchored before moderation existed.
-            # Grandfather them in so they remain visible in the public timeline.
             conn.execute(text("""
                 UPDATE aid_events
                 SET review_status = 'approved',

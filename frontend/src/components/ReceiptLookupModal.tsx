@@ -69,7 +69,6 @@ export const ReceiptLookupModal: React.FC<Props> = ({
         className="modal-card-frosted receipt-modal"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="receipt-modal-header">
           <div className="receipt-title-group">
             <div className="receipt-badge-icon" aria-hidden="true">
@@ -115,7 +114,6 @@ export const ReceiptLookupModal: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Recessed Segmented Switcher */}
         <div className="receipt-seg" role="tablist" aria-label="Verification method">
           <button
             type="button"
@@ -137,7 +135,6 @@ export const ReceiptLookupModal: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Scan QR Tab – live PC ↔ phone pairing */}
         {activeTab === "scan" && (
           <ReceiptPairingPanel
             onReceipt={(verified) => {
@@ -148,7 +145,6 @@ export const ReceiptLookupModal: React.FC<Props> = ({
           />
         )}
 
-        {/* Code Entry Tab */}
         {activeTab === "code" && (
           <form onSubmit={handleSearch} className="receipt-code-form">
             <div>
@@ -176,10 +172,8 @@ export const ReceiptLookupModal: React.FC<Props> = ({
           </form>
         )}
 
-        {/* Error Message */}
         {error && <div className="auth-alert error receipt-alert">{error}</div>}
 
-        {/* Verified Receipt Result Card */}
         {receipt && (
           <div className="receipt-result-card">
             <div className="receipt-result-banner">

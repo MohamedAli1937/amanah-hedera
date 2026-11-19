@@ -9,8 +9,6 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    # Neon is the single source of truth. Tests inject a temporary SQLite URL
-    # via the environment before importing the app; production must use Neon.
     raise RuntimeError("DATABASE_URL is not configured")
 
 if DATABASE_URL.startswith("postgresql://"):

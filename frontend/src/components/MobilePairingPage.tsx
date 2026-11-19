@@ -37,12 +37,10 @@ export const MobilePairingPage: React.FC<Props> = ({ code }) => {
     try {
       await scanner.stop();
     } catch {
-      // already stopped
     }
     try {
       scanner.clear();
     } catch {
-      // container already cleared
     }
   }
 
@@ -92,7 +90,6 @@ export const MobilePairingPage: React.FC<Props> = ({ code }) => {
           await submit(decodedText);
         },
         () => {
-          // ignore frames without a QR code
         }
       );
     } catch (err) {

@@ -51,10 +51,13 @@ export const ProfilePage: React.FC<Props> = ({
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showReceiptCard, setShowReceiptCard] = useState(false);
 
-  // Editable Profile State
   const [customName, setCustomName] = useState(
     profile.name || "Amanah Demo Org"
   );
+
+  useEffect(() => {
+    if (profile.name) setCustomName(profile.name);
+  }, [profile.name]);
   const [customBio, setCustomBio] = useState(
     "A registered non-profit delivering emergency food aid to families in Tunis. Every donation is recorded on the ledger so donors can trace it from receipt to distribution."
   );
@@ -119,6 +122,7 @@ export const ProfilePage: React.FC<Props> = ({
     const activeCampaign =
       campaigns.find((c) => c.id === Number(selectedCampId)) || campaigns[0];
     const campId = activeCampaign ? activeCampaign.id : selectedCampId;
+    const donorLabel = donorName.trim() || "Anonymous";
 
     try {
       const res = await api<any>(`/campaigns/${campId}/donations/record`, {
@@ -126,7 +130,7 @@ export const ProfilePage: React.FC<Props> = ({
         body: JSON.stringify({
           campaign_id: campId,
           amount: intakeAmount,
-          donor_name: donorName || undefined,
+          donor_name: donorLabel,
         }),
       });
 
@@ -134,7 +138,7 @@ export const ProfilePage: React.FC<Props> = ({
         receipt_token: res.receipt_token,
         amount: Number(res.amount || intakeAmount),
         campaign_title: activeCampaign?.title || `Campaign #${campId}`,
-        donor_name: donorName || undefined,
+        donor_name: donorLabel,
         hedera_sequence_number: res.hedera_sequence_number,
         hedera_transaction_id: res.hedera_transaction_id,
       });
@@ -155,9 +159,6 @@ export const ProfilePage: React.FC<Props> = ({
     }
   }
 
-  // ==========================================================================
-  // MODERATOR VIEW
-  // ==========================================================================
   if (user?.role === "platform_admin") {
     const pendingCount = pendingNgos.filter(
       (n) => n.verification_status === "pending"
@@ -314,9 +315,6 @@ export const ProfilePage: React.FC<Props> = ({
     );
   }
 
-  // ==========================================================================
-  // NGO ADMIN / USER PROFILE VIEW
-  // ==========================================================================
   const orgEmail = profile.email || user?.email || "contact@espoir.example";
   const isVerified = ngoStatus
     ? ngoStatus.verification_status === "verified"
@@ -353,9 +351,7 @@ export const ProfilePage: React.FC<Props> = ({
         </div>
       )}
 
-      {/* 1. Top Grid: Account Profile Box (#06402f) + Issue Receipt Box */}
       <div className="profile-top-grid">
-        {/* Left Box: #06402f Account Profile Card */}
         <div className="card profile-hero-card">
           <div>
             <div className="profile-hero-head">
@@ -389,7 +385,6 @@ export const ProfilePage: React.FC<Props> = ({
                     )}
                   </div>
 
-                  {/* Icon buttons positioned right of the name */}
                   <div className="profile-name-actions">
                     <button
                       type="button"
@@ -438,14 +433,12 @@ export const ProfilePage: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Boxed NGO Description */}
             <div className="profile-bio-box">
               <p className="profile-bio">{customBio}</p>
             </div>
           </div>
 
           <div className="profile-hero-footer">
-            {/* 2-Column Stats Strip */}
             <div className="profile-stats-strip">
               <div className="profile-stat-cell">
                 <span className="profile-stat-label">Active Campaigns</span>
@@ -461,7 +454,6 @@ export const ProfilePage: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Contact Pills */}
             <div className="profile-meta-chips">
               <span className="profile-chip">
                 <svg
@@ -516,7 +508,6 @@ export const ProfilePage: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Right Box: Issue Receipt & Record Donation Panel */}
         <div className="card profile-intake-card">
           <div>
             <div className="profile-intake-header">
@@ -592,7 +583,6 @@ export const ProfilePage: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* Amount Input + $25 $50 $100 $250 $500 Inline on ONE single row */}
               <div>
                 <label>Amount (USD)</label>
                 <div className="profile-amount-line">
@@ -654,7 +644,6 @@ export const ProfilePage: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Review Pending Warning */}
       {dashboardError &&
         user?.role === "ngo_admin" &&
         ngoStatus?.verification_status === "pending" && (
@@ -664,7 +653,6 @@ export const ProfilePage: React.FC<Props> = ({
           </div>
         )}
 
-      {/* 2. My Campaigns Section */}
       <div className="card profile-campaigns-panel">
         <div className="profile-campaigns-header">
           <div>
@@ -779,7 +767,6 @@ export const ProfilePage: React.FC<Props> = ({
 
       <NgoActivityPanel campaigns={campaigns} />
 
-      {/* Interactive Edit Profile Modal */}
       {showEditProfile && (
         <div
           className="modal-backdrop-frosted"
@@ -879,7 +866,6 @@ export const ProfilePage: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Create Campaign Modal */}
       {showCreateCampaign && (
         <CreateCampaignModal
           ngoId={
@@ -898,7 +884,6 @@ export const ProfilePage: React.FC<Props> = ({
         />
       )}
 
-      {/* Edit Campaign Modal */}
       {editingCampaign && (
         <EditCampaignModal
           campaign={editingCampaign}

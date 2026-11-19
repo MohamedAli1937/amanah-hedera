@@ -26,7 +26,6 @@ export const EditCampaignModal: React.FC<Props> = ({
     campaign.urgency || "high"
   );
 
-  // Determine initial country ISO code from location_name
   const allCountries = useMemo(() => Country.getAllCountries(), []);
 
   const guessInitialCountryCode = () => {
@@ -55,7 +54,6 @@ export const EditCampaignModal: React.FC<Props> = ({
     guessInitialCity(citiesForCountry)
   );
 
-  // Image: file upload (base64) or URL preset
   const [imageUrl, setImageUrl] = useState(
     campaign.image_url || PRESET_CAMPAIGN_IMAGES[0].url
   );
@@ -150,7 +148,6 @@ export const EditCampaignModal: React.FC<Props> = ({
         className="modal-card-frosted campaign-modal"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="campaign-modal-header">
           <div className="campaign-title-group">
             <div className="campaign-badge-icon" aria-hidden="true">
@@ -196,7 +193,6 @@ export const EditCampaignModal: React.FC<Props> = ({
         {error && <div className="auth-alert error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="modal-form">
-          {/* Title */}
           <div>
             <label>Campaign Title</label>
             <input
@@ -209,7 +205,6 @@ export const EditCampaignModal: React.FC<Props> = ({
             />
           </div>
 
-          {/* Description */}
           <div>
             <label>Description & Mission</label>
             <textarea
@@ -221,7 +216,6 @@ export const EditCampaignModal: React.FC<Props> = ({
             />
           </div>
 
-          {/* Goal, Urgency & Status Row */}
           <div className="campaign-three-col">
             <div>
               <label>Goal (USD)</label>
@@ -266,7 +260,6 @@ export const EditCampaignModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Location Picker Box */}
           <div className="campaign-location-box">
             <div className="campaign-location-top">
               <div className="campaign-location-label">
@@ -332,7 +325,6 @@ export const EditCampaignModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Campaign Photo Switcher */}
           <div>
             <div className="campaign-photo-head">
               <label style={{ marginBottom: 0 }}>Campaign Photo</label>
@@ -452,7 +444,6 @@ export const EditCampaignModal: React.FC<Props> = ({
             )}
           </div>
 
-          {/* Public NGO Donation Link */}
           <div>
             <label>Public NGO Donation Link (Optional)</label>
             <input
@@ -463,7 +454,6 @@ export const EditCampaignModal: React.FC<Props> = ({
             />
           </div>
 
-          {/* Footer Actions */}
           <div className="campaign-modal-footer">
             <button type="button" className="btn sec" onClick={onClose}>
               Cancel

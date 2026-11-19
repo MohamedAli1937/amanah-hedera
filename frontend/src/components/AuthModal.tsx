@@ -135,7 +135,6 @@ export const AuthModal: React.FC<Props> = ({
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top Header */}
         <div className="auth-modal-top">
           <div>
             <h2 className="auth-modal-title">
@@ -318,7 +317,6 @@ export const AuthModal: React.FC<Props> = ({
           </div>
         )}
 
-        {/* Toggle Mode */}
         <div className="auth-switch-footer">
           {!isRegister ? (
             <p>

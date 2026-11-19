@@ -70,7 +70,6 @@ export const ReceiptPairingPanel: React.FC<Props> = ({ onReceipt }) => {
             onReceipt(result.result);
           }
         } catch {
-          // transient polling failure – keep trying until TTL expires
         }
       }, 1500);
     } catch (err) {
@@ -82,7 +81,6 @@ export const ReceiptPairingPanel: React.FC<Props> = ({ onReceipt }) => {
 
   useEffect(() => {
     startSession();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

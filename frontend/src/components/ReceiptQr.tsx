@@ -8,10 +8,6 @@ interface Props {
   label?: string;
 }
 
-/**
- * QR encoding the raw receipt token. Print this next to the code on a paper
- * receipt so a phone can scan it during PC ↔ phone pairing.
- */
 export const ReceiptQr: React.FC<Props> = ({ token, size = 120, className, label }) => {
   const [svg, setSvg] = useState("");
 

@@ -25,7 +25,6 @@ export const CreateCampaignModal: React.FC<Props> = ({
     "critical"
   );
 
-  // Country & City Picker using country-state-city library
   const allCountries = useMemo(() => Country.getAllCountries(), []);
   const [selectedCountryCode, setSelectedCountryCode] = useState("PS");
   const citiesForCountry = useMemo(
@@ -127,7 +126,6 @@ export const CreateCampaignModal: React.FC<Props> = ({
         className="modal-card-frosted campaign-modal"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="campaign-modal-header">
           <div className="campaign-title-group">
             <div className="campaign-badge-icon" aria-hidden="true">
@@ -173,7 +171,6 @@ export const CreateCampaignModal: React.FC<Props> = ({
         {error && <div className="auth-alert error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="modal-form">
-          {/* Title */}
           <div>
             <label>Campaign Title</label>
             <input
@@ -187,7 +184,6 @@ export const CreateCampaignModal: React.FC<Props> = ({
             />
           </div>
 
-          {/* Description */}
           <div>
             <label>Description & Mission</label>
             <textarea
@@ -200,7 +196,6 @@ export const CreateCampaignModal: React.FC<Props> = ({
             />
           </div>
 
-          {/* Goal & Urgency Row */}
           <div className="campaign-two-col">
             <div>
               <label>Fundraising Goal (USD)</label>
@@ -230,7 +225,6 @@ export const CreateCampaignModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Location Picker Box */}
           <div className="campaign-location-box">
             <div className="campaign-location-top">
               <div className="campaign-location-label">
@@ -296,7 +290,6 @@ export const CreateCampaignModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Campaign Photo Switcher */}
           <div>
             <div className="campaign-photo-head">
               <label style={{ marginBottom: 0 }}>Campaign Photo</label>
@@ -416,7 +409,6 @@ export const CreateCampaignModal: React.FC<Props> = ({
             )}
           </div>
 
-          {/* External Donation Portal */}
           <div>
             <label>Public NGO Donation Link (Optional)</label>
             <input
@@ -427,7 +419,6 @@ export const CreateCampaignModal: React.FC<Props> = ({
             />
           </div>
 
-          {/* Footer Actions */}
           <div className="campaign-modal-footer">
             <button
               type="button"

@@ -59,7 +59,6 @@ export const LedgerPage: React.FC<Props> = ({
 
   return (
     <div className="wrap">
-      {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "22px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           {onBack && (
@@ -101,7 +100,6 @@ export const LedgerPage: React.FC<Props> = ({
         </a>
       </div>
 
-      {/* Filter & Search Bar */}
       <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" }}>
         <div style={{ width: "300px" }}>
           <select
@@ -138,9 +136,7 @@ export const LedgerPage: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Table Card */}
       <div className="card frosted" style={{ padding: 0, overflow: "hidden" }}>
-        {/* Table Header */}
         <div
           className="trow"
           style={{
@@ -159,7 +155,6 @@ export const LedgerPage: React.FC<Props> = ({
           <span>STATUS</span>
         </div>
 
-        {/* Rows */}
         {filteredTransactions.length === 0 ? (
           <div style={{ padding: "40px 20px", textAlign: "center", color: "#64748b" }}>
             No ledger transactions matched your filters.

@@ -36,10 +36,7 @@ const BASEMAP_STYLE_URL = withKey(
   "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
 );
 
-// Raster tiles have labels baked into the image, so their names can't be
-// renamed. Stopgap: labelled tiles so the map is never blank. Set to false to
-// use label-free tiles instead (no wrong names, but no names at all).
-const FALLBACK_SHOW_LABELS = false; // we draw our own Palestinian labels instead
+const FALLBACK_SHOW_LABELS = false;
 
 const BASEMAP_RASTER_FALLBACK = withKey(
   `https://basemaps.cartocdn.com/rastertiles/${
@@ -50,17 +47,10 @@ const BASEMAP_RASTER_FALLBACK = withKey(
 const BASEMAP_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
-// How long we wait for the vector basemap before giving up on it. This only
-// matters the very first time the map is created (the map is then reused).
 const VECTOR_TIMEOUT_MS = 10000;
 
-/**
- * Label overrides: { displayed name: [names the basemap may use for it] }.
- * Source names are matched case-insensitively against name_en / name:latin / name.
- * Edit this table to add or fix names.
- */
+
 const PALESTINIAN_NAMES: Record<string, string[]> = {
-  // Country / territory
   Palestine: [
     "Israel",
     "State of Israel",
@@ -70,7 +60,6 @@ const PALESTINIAN_NAMES: Record<string, string[]> = {
     "Palestine",
   ],
 
-  // Historic Palestine - cities and towns
   "Al-Quds": ["Jerusalem", "East Jerusalem", "West Jerusalem", "Yerushalayim"],
   Yafa: ["Tel Aviv", "Tel Aviv-Yafo", "Tel Aviv-Jaffo", "Tel-Aviv", "Jaffa", "Yafo"],
   Akka: ["Acre", "Akko", "Acco"],
@@ -118,7 +107,6 @@ const PALESTINIAN_NAMES: Record<string, string[]> = {
   "Baqa al-Gharbiyya": ["Baqa al-Gharbiyye"],
   "Tirat al-Karmil": ["Tirat Carmel", "Tirat Karmel"],
 
-  // West Bank & Gaza
   "Al-Khalil": ["Hebron"],
   "Bayt Lahm": ["Bethlehem"],
   "Bayt Jala": ["Beit Jala"],
@@ -132,19 +120,12 @@ const PALESTINIAN_NAMES: Record<string, string[]> = {
   "Dayr al-Balah": ["Deir al-Balah", "Deir el-Balah"],
   Gaza: ["Gaza City"],
 
-  // Water bodies
   "Lake Tabariyya": ["Sea of Galilee", "Lake Kinneret", "Lake Tiberias", "Kinneret"],
 };
 
-
-// ---------------------------------------------------------------------------
-// Own labels for the raster fallback (raster tiles can't be renamed).
-// [name, lat, lng, minZoom, maxZoom, kind]
-// ---------------------------------------------------------------------------
 type FallbackLabel = [string, number, number, number, number, "country" | "city"];
 
 const FALLBACK_LABELS: FallbackLabel[] = [
-  // Palestine
   ["Palestine", 30.9, 34.9, 2, 10, "country"],
   ["Al-Quds", 31.7683, 35.2137, 5, 12, "city"],
   ["Yafa", 32.0553, 34.7527, 5, 12, "city"],
@@ -175,14 +156,12 @@ const FALLBACK_LABELS: FallbackLabel[] = [
   ["Umm Khalid", 32.3215, 34.8532, 8, 12, "city"],
   ["Al-Khudayra", 32.434, 34.9196, 9, 12, "city"],
 
-  // Neighbours (cities)
   ["Beirut", 33.8938, 35.5018, 6, 12, "city"],
   ["Damascus", 33.5138, 36.2765, 6, 12, "city"],
   ["Amman", 31.9454, 35.9284, 6, 12, "city"],
   ["Aqaba", 29.5321, 35.0063, 7, 12, "city"],
   ["Cairo", 30.0444, 31.2357, 6, 12, "city"],
 
-  // Countries (shown when zoomed out)
   ["Lebanon", 33.85, 35.86, 5, 7, "country"],
   ["Syria", 34.8, 38.99, 4, 7, "country"],
   ["Jordan", 31.3, 36.5, 5, 7, "country"],
@@ -272,7 +251,6 @@ function applyPalestinianLabels(glMap: MapLibreMap) {
   const style = glMap.getStyle();
   if (!style?.layers) return;
 
-  // Prefer English names, then Latin names, then the default name.
   const englishName = [
     "to-string",
     [
@@ -285,7 +263,6 @@ function applyPalestinianLabels(glMap: MapLibreMap) {
     ],
   ];
 
-  // `match` labels must be unique, so dedupe defensively.
   const seen = new Set<string>();
   const pairs: unknown[] = [];
 
@@ -301,8 +278,6 @@ function applyPalestinianLabels(glMap: MapLibreMap) {
     if (labels.length) pairs.push(labels, display);
   }
 
-  // Check each name property on its own, so a country/region whose name_en
-  // differs from its name:latin / name is still caught.
   const props = ["name_en", "name:en", "name:latin", "name"];
   let textField: unknown = englishName;
 
@@ -336,26 +311,15 @@ function applyPalestinianLabels(glMap: MapLibreMap) {
   console.info(`[Amanah map] Relabelled ${updated} label layers`);
 }
 
-/** Optional: call once at app start so the style JSON is already cached. */
 export function preloadBasemap() {
   if (typeof window === "undefined") return;
   fetch(BASEMAP_STYLE_URL).catch(() => {});
 }
 
-// ---------------------------------------------------------------------------
-// Shared map instance
-//
-// Creating a Leaflet + MapLibre map is expensive (style JSON, glyphs, tiles,
-// WebGL context). Instead of destroying it every time the page unmounts, we
-// create it once, keep it alive, and just re-attach its DOM node when the page
-// is shown again. Returning from Ledger etc. is now instant and keeps the
-// previous view.
-// ---------------------------------------------------------------------------
 interface SharedMap {
   host: HTMLDivElement;
   map: L.Map;
   cluster: L.MarkerClusterGroup;
-  // Points at whichever <InteractiveMap> is currently mounted
   onSelect: { current: (c: Campaign | null) => void } | null;
 }
 
@@ -364,7 +328,7 @@ let shared: SharedMap | null = null;
 function createSharedMap(container: HTMLElement): SharedMap {
   const host = document.createElement("div");
   host.style.cssText = "width:100%;height:100%;position:absolute;inset:0;";
-  container.appendChild(host); // must be in the DOM before Leaflet measures it
+  container.appendChild(host);
 
   const map = L.map(host, {
     center: DEFAULT_CENTER,
@@ -373,14 +337,12 @@ function createSharedMap(container: HTMLElement): SharedMap {
     maxZoom: 12,
     worldCopyJump: true,
     zoomControl: false,
-    // Less DOM/CSS animation work while panning or zooming over a GL layer
     markerZoomAnimation: false,
     fadeAnimation: false,
   });
 
   const state: SharedMap = { host, map, cluster: null as never, onSelect: null };
 
-  // Clicking empty map space deselects the campaign.
   map.on("click", () => state.onSelect?.current(null));
 
   let rasterLayer: L.TileLayer | null = null;
@@ -411,17 +373,12 @@ function createSharedMap(container: HTMLElement): SharedMap {
     ).maplibreGL({
       style: BASEMAP_STYLE_URL,
       attribution: BASEMAP_ATTRIBUTION,
-      // Re-render the GL canvas more often while panning (default 32ms) so
-      // the basemap doesn't trail behind the markers on fast drags.
       updateInterval: 16,
     });
 
     basemap.addTo(map);
     const glMap = basemap.getMaplibreMap();
 
-    // Fall back to raster only if the vector map never renders: the style fails,
-    // or several tile/source requests fail before the first full load. A single
-    // stray tile error is tolerated.
     let rendered = false;
     let sourceErrors = 0;
 
@@ -441,7 +398,6 @@ function createSharedMap(container: HTMLElement): SharedMap {
       }
     });
 
-    // One-time diagnostic: where do "Israel" labels come from?
     glMap.once("idle", () => {
       try {
         const layers = (glMap.getStyle()?.layers ?? [])
@@ -474,7 +430,7 @@ function createSharedMap(container: HTMLElement): SharedMap {
         error: e.error ?? e,
       });
       if (rendered) return;
-      if (!e.sourceId) return; // e.g. label-expression validation, not fatal
+      if (!e.sourceId) return;
       if (++sourceErrors >= 3) dropVector(e.error ?? e);
     });
 
@@ -653,7 +609,6 @@ export const InteractiveMap = forwardRef<MapHandle, Props>(
       marker.setZIndexOffset(selected ? 1000 : opts.baseZ);
     }
 
-    // Attach the shared map to this component (created once, reused afterwards).
     useEffect(() => {
       const container = mapContainerRef.current;
       if (!container) return;
@@ -669,20 +624,18 @@ export const InteractiveMap = forwardRef<MapHandle, Props>(
       mapInstanceRef.current = s.map;
       clusterRef.current = s.cluster;
 
-      // The container may have a different size than last time.
       s.map.invalidateSize({ animate: false });
 
       return () => {
         s.map.stop();
         if (s.onSelect === onSelectRef) s.onSelect = null;
-        s.host.remove(); // detach only, the map itself stays alive
+        s.host.remove();
         mapInstanceRef.current = null;
         clusterRef.current = null;
         markersRef.current = [];
       };
     }, []);
 
-    // Rebuild markers only when campaigns change.
     useEffect(() => {
       const cluster = clusterRef.current;
       if (!mapInstanceRef.current || !cluster) return;
@@ -692,7 +645,6 @@ export const InteractiveMap = forwardRef<MapHandle, Props>(
       const markers: L.Marker[] = [];
       const points: L.LatLng[] = [];
 
-      // Track duplicate coordinates to avoid perfect overlaps.
       const coordSeen: Record<string, number> = {};
 
       campaigns.forEach((camp) => {
@@ -714,7 +666,6 @@ export const InteractiveMap = forwardRef<MapHandle, Props>(
         const seenCount = coordSeen[key] || 0;
         coordSeen[key] = seenCount + 1;
 
-        // Deterministic slight angle offset for overlapping pins.
         let lat = rawLat;
         let lng = rawLng;
 
@@ -777,14 +728,11 @@ export const InteractiveMap = forwardRef<MapHandle, Props>(
       markersRef.current = markers;
       pointsRef.current = points;
 
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [campaigns]);
 
-    // Update selected marker styling.
     useEffect(() => {
       markersRef.current.forEach(applyPinState);
 
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedId]);
 
     return (

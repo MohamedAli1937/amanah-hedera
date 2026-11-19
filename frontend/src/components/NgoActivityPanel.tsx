@@ -70,7 +70,6 @@ export const NgoActivityPanel: React.FC<Props> = ({ campaigns }) => {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCampId]);
 
   const onCreated = () => {

@@ -7,6 +7,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import "@maplibre/maplibre-gl-leaflet";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import type { Campaign } from "../types";
+import { Country } from "country-state-city";
 
 export interface MapHandle {
   zoomIn: () => void;
@@ -36,7 +37,7 @@ const BASEMAP_STYLE_URL = withKey(
   "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
 );
 
-const FALLBACK_SHOW_LABELS = true;
+const FALLBACK_SHOW_LABELS = false;
 
 const BASEMAP_RASTER_FALLBACK = withKey(
   `https://basemaps.cartocdn.com/rastertiles/${
@@ -203,6 +204,26 @@ const FALLBACK_LABELS: FallbackLabel[] = [
   ["Kazakhstan", 48.0, 67.0, 3, 7, "country"],
 ];
 
+// Generate labels for every country from the bundled dataset. Israel and the
+// Palestinian Territory entry are skipped: our own "Palestine" label (below)
+// replaces them, so no unwanted country name is drawn.
+function generatedCountryLabels(): FallbackLabel[] {
+  const seen = new Set<string>();
+  const labels: FallbackLabel[] = [];
+  for (const country of Country.getAllCountries()) {
+    const name = country.name;
+    if (/palest|israel/i.test(name)) continue;
+    if (seen.has(name)) continue;
+    seen.add(name);
+    const lat = Number.parseFloat(country.latitude);
+    const lng = Number.parseFloat(country.longitude);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      labels.push([name, lat, lng, 2, 7, "country"]);
+    }
+  }
+  return labels;
+}
+
 function addFallbackLabels(map: L.Map) {
   const group = L.layerGroup().addTo(map);
 
@@ -210,7 +231,12 @@ function addFallbackLabels(map: L.Map) {
     const z = map.getZoom();
     group.clearLayers();
 
-    for (const [name, lat, lng, minZ, maxZ, kind] of FALLBACK_LABELS) {
+    const labels: FallbackLabel[] = [
+      ...generatedCountryLabels(),
+      ...FALLBACK_LABELS.filter((l) => l[5] === "city" || l[0] === "Palestine"),
+    ];
+
+    for (const [name, lat, lng, minZ, maxZ, kind] of labels) {
       if (z < minZ || z > maxZ) continue;
 
       const isCountry = kind === "country";

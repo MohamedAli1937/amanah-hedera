@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Html5Qrcode } from "html5-qrcode";
 import { api } from "../api";
 
 interface Props {
   code: string;
 }
 
-interface Detector {
-  detect: (source: HTMLVideoElement) => Promise<Array<{ rawValue?: string }>>;
-}
+const SCANNER_ID = "amanah-qr-reader";
 
 function normalizeToken(value: string): string {
   const raw = value.trim();
@@ -23,24 +22,39 @@ function normalizeToken(value: string): string {
 }
 
 export const MobilePairingPage: React.FC<Props> = ({ code }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
   const [token, setToken] = useState("");
-  const [status, setStatus] = useState("Use your camera to scan a receipt QR, or enter its code below.");
+  const [status, setStatus] = useState("Use your camera to scan the QR code printed on your receipt, or enter its code below.");
   const [submitting, setSubmitting] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const [done, setDone] = useState(false);
 
-  useEffect(
-    () => () => {
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-    },
-    []
-  );
-
-  function stopCamera() {
-    streamRef.current?.getTracks().forEach((track) => track.stop());
-    streamRef.current = null;
+  async function stopScanner() {
+    const scanner = scannerRef.current;
+    scannerRef.current = null;
+    setScanning(false);
+    if (!scanner) return;
+    try {
+      await scanner.stop();
+    } catch {
+      // already stopped
+    }
+    try {
+      scanner.clear();
+    } catch {
+      // container already cleared
+    }
   }
+
+  useEffect(() => {
+    return () => {
+      const scanner = scannerRef.current;
+      if (scanner) {
+        void scanner.stop().catch(() => undefined);
+        void Promise.resolve(scanner.clear()).catch(() => undefined);
+      }
+    };
+  }, []);
 
   async function submit(value = token) {
     const receiptToken = normalizeToken(value);
@@ -52,10 +66,10 @@ export const MobilePairingPage: React.FC<Props> = ({ code }) => {
         method: "POST",
         body: JSON.stringify({ receipt_token: receiptToken }),
       });
+      await stopScanner();
       setToken(receiptToken);
       setDone(true);
       setStatus("Receipt sent. The paired device will show the verification result.");
-      stopCamera();
     } catch (err) {
       setStatus(err instanceof Error ? err.message : "Receipt could not be sent");
     } finally {
@@ -64,37 +78,28 @@ export const MobilePairingPage: React.FC<Props> = ({ code }) => {
   }
 
   async function startCamera() {
-    const DetectorClass = (
-      window as Window & { BarcodeDetector?: new (options?: { formats?: string[] }) => Detector }
-    ).BarcodeDetector;
-    if (!DetectorClass || !navigator.mediaDevices?.getUserMedia || !videoRef.current) {
-      setStatus("Camera scanning is not supported by this browser. Enter the receipt code manually.");
-      return;
-    }
+    await stopScanner();
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      streamRef.current = stream;
-      videoRef.current.srcObject = stream;
-      await videoRef.current.play();
-      const detector = new DetectorClass({ formats: ["qr_code"] });
-      const scan = async () => {
-        if (!videoRef.current || done) return;
-        try {
-          const results = await detector.detect(videoRef.current);
-          const value = results[0]?.rawValue?.trim();
-          if (value) {
-            setToken(normalizeToken(value));
-            await submit(value);
-            return;
-          }
-        } catch {
-          // keep scanning
+      const scanner = new Html5Qrcode(SCANNER_ID, { verbose: false });
+      scannerRef.current = scanner;
+      setScanning(true);
+      setStatus("Camera active — point it at the QR code on your receipt.");
+      await scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 240, height: 240 } },
+        async (decodedText) => {
+          setToken(normalizeToken(decodedText));
+          await submit(decodedText);
+        },
+        () => {
+          // ignore frames without a QR code
         }
-        window.requestAnimationFrame(scan);
-      };
-      window.requestAnimationFrame(scan);
-    } catch {
-      setStatus("Camera access was denied. Enter the receipt code manually.");
+      );
+    } catch (err) {
+      await stopScanner();
+      setStatus(
+        `Camera could not start: ${err instanceof Error ? err.message : String(err)}. Enter the code manually instead.`
+      );
     }
   }
 
@@ -120,18 +125,26 @@ export const MobilePairingPage: React.FC<Props> = ({ code }) => {
         </div>
         <p style={{ margin: 0, color: "#64748b", fontSize: "13px", lineHeight: 1.5 }}>{status}</p>
 
-        <video
-          ref={videoRef}
-          muted
-          playsInline
-          style={{ width: "100%", borderRadius: "14px", background: "#0f172a", minHeight: "200px" }}
+        <div
+          id={SCANNER_ID}
+          style={{
+            width: "100%",
+            minHeight: 220,
+            borderRadius: "14px",
+            overflow: "hidden",
+            background: "#0f172a",
+          }}
         />
 
         {!done && (
           <>
-            <button type="button" className="btn sec" onClick={startCamera} disabled={submitting}>
-              Start camera
-            </button>
+            {scanning ? (
+              <button type="button" className="btn sec" onClick={stopScanner}>Stop camera</button>
+            ) : (
+              <button type="button" className="btn sec" onClick={startCamera} disabled={submitting}>
+                Start camera
+              </button>
+            )}
             <input
               value={token}
               onChange={(event) => setToken(event.target.value)}

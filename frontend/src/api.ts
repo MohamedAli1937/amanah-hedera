@@ -39,7 +39,15 @@ export async function api<T>(path: string,options: RequestInit = {},): Promise<T
 
   if (options.body && !(options.body instanceof FormData)) {headers.set("Content-Type", "application/json");}
 
-  const response = await fetch(`${API_URL}${path}`, {...options,headers,});
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {...options,headers,});
+  } catch (err) {
+    throw new Error(
+      `Cannot reach the API at ${API_URL || "(VITE_API_URL is empty)"}. ` +
+      `Check that the backend is live and CORS allows this origin. (${err instanceof Error ? err.message : err})`
+    );
+  }
 
   if (!response.ok) {
     const data = await response.json().catch(() => null);

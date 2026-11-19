@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engplace)
+    Base.metadata.create_all(bind=engine)
     with engine.begin() as conn:
         try:
             if "sqlite" in str(engine.url):
